@@ -1,7 +1,8 @@
+
 unsigned beq(unsigned pc)
 {
-    unsigned rs1=RS1;
-    unsigned rs2=RS2;
+    unsigned rs1=*RS1;
+    unsigned rs2=*RS2;
     short tmp=lig;
     int a=tmp;
     unsigned b=a;
@@ -15,8 +16,8 @@ unsigned beq(unsigned pc)
 
 unsigned bne(unsigned pc)
 {
-    unsigned rs1=RS1;
-    unsigned rs2=RS2;
+    unsigned rs1=*RS1;
+    unsigned rs2=*RS2;
     short tmp=lig;
     int a=tmp;
     unsigned b=a;
@@ -30,7 +31,7 @@ unsigned bne(unsigned pc)
 
 unsigned blez(unsigned pc)
 {
-    int rs2=RS2;
+    int rs2=*RS2;
     short tmp=lig;
     int a=tmp;
     unsigned b=a;
@@ -44,12 +45,12 @@ unsigned blez(unsigned pc)
 
 unsigned bgtz(unsigned pc)
 {
-    int rs2=RS2;
+    int rs2=*RS2;
     short tmp=lig;
     int a=tmp;
     unsigned b=a;
     b=b<<2;
-    if(rs1>0)
+    if(rs2>0)
     {
         return pc+4+b;
     }
@@ -58,12 +59,12 @@ unsigned bgtz(unsigned pc)
 
 unsigned bltz(unsigned pc)
 {
-    int rs2=RS2;
+    int rs2=*RS2;
     short tmp=lig;
     int a=tmp;
     unsigned b=a;
     b=b<<2;
-    if(rs1<0)
+    if(rs2<0)
     {
         return pc+4+b;
     }
@@ -95,7 +96,7 @@ unsigned jal(unsigned pc)
 
 unsigned jr(unsigned pc)
 {
-  return RS2;
+  return *RS2;
 }
 
 unsigned jalr(unsigned pc)
@@ -129,7 +130,7 @@ unsigned mfepc(unsigned pc)
 
 unsigned mfco(unsigned pc)
 {
-    *RD=Cause_Reg;
+    *RS1=Cause_Reg;
     return pc+4;
 }
 

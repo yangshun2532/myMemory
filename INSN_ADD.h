@@ -1,6 +1,5 @@
-
 unsigned myRegister[32]={0};//申请一个数组来模拟寄存器
-unsigned long myFloatReg[32]={0};
+unsigned long long myFloatReg[32]={0};
 unsigned lo=0;
 unsigned hi=0;
 unsigned bad=0;
@@ -8,14 +7,18 @@ unsigned sr=0;
 unsigned EPC=0;
 unsigned Cause_Reg=0;
 unsigned pc=0;
+unsigned instru=0;
 unsigned* RD=NULL; //Rd
 unsigned* RS1=NULL;//Rt
 unsigned* RS2=NULL;//Rs
-unsigned long* FD=NULL;
-unsigned long* FS1=NULL;//Rt
-unsigned long* FS2=NULL;//Rs
+unsigned long long* FD=NULL;
+unsigned long long* FS1=NULL;//Rt
+unsigned long long* FS2=NULL;//Rs
 unsigned short lig=0;   //I型指令的立即数
 unsigned target_addr;
+unsigned short programHead=0x9000;
+unsigned short programTail=0;
+unsigned pcShort=0;
 
 /*DATE:2014/10/22
 功能：从通用寄存器取无符号数
@@ -56,7 +59,7 @@ unsigned sub(unsigned pc)
 {
     int rs1=*RS1;
     int rs2=*RS2;
-    tmp=rs1-rs2;
+    int tmp=rs1-rs2;
     *RD=rs2-rs1;
    if(rs1>0&&rs2<0&&tmp<0)
         exit(EXIT_FAILURE);
@@ -81,7 +84,7 @@ unsigned addi(unsigned pc)
     int tmp_int=(int)tmp;
     *RS1=rs2+tmp_int;
     int a=*RS1;
-  if(tmp_int0&&rs2>0&&a<0)
+  if(tmp_int>0&&rs2>0&&a<0)
         exit(EXIT_FAILURE);
   if(tmp_int<0&&rs2<0&&tmp>0)
         exit(EXIT_FAILURE);
@@ -101,7 +104,7 @@ unsigned mul(unsigned pc)
 {
     int rs1=*RS1;
     int rs2=*RS2;
-    long result=(long)rs1*(long)rs2;
+    long long result=(long long)rs1*(long long)rs2;
     unsigned* tmp=&result;
     hi=*tmp;
     lo=*(tmp+1);
@@ -112,7 +115,7 @@ unsigned mulu(unsigned pc)
 {
     unsigned rs1=*RS1;
     unsigned rs2=*RS2;
-    long result=(unsigned long)rs1*(unsigned long)rs2;
+    long long result=(unsigned long long)rs1*(unsigned long long)rs2;
     unsigned* tmp=&result;
     hi=*tmp;
     lo=*(tmp+1);

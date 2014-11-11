@@ -10,6 +10,11 @@ MyMemory以512B为一页，共128页，第一页用于存放页表和空闲块管理队列。
 #include <stdio.h>
 #include <stdlib.h>
 #include"INSN_ADD.h"
+#include "load.h"
+#include "logic.h"
+#include "jump.h"
+#include "float_cal.h"
+
 /*静态队列freePage用来管理空闲物理页，有损耗均衡的功能*/
 struct freePage
 {
@@ -37,7 +42,7 @@ int init()
   MyMemory=(struct myMemory*)malloc(sizeof(struct myMemory));
   MyMemory->vm_size=65536;//64KB
   printf("%u",MyMemory->vm_size);
-  MyMemory->myBuffer=(char*)malloc(MyMemory->vm_size);
+  MyMemory->myBuffer=(unsigned char*)malloc(MyMemory->vm_size);
   printf("the addr of buffer is : %p\n",MyMemory->myBuffer);
   MyMemory->vm_start=MyMemory->myBuffer;
   MyMemory->vm_end=MyMemory->vm_start+MyMemory->vm_size;
@@ -152,12 +157,12 @@ int readMymemory(unsigned short addr,unsigned char* Register)
 函数名：writeMymemory
 功能：将寄存器数据写到MyMemory
 **************************************************************/
-int writeMymemory(unsigned short addr,unsigned* Register)
+int writeMymemory(unsigned short addr,unsigned char* Register)
 {
     printf("begin write\n");
     //if(addr%4!=0||addr<512)
        // return -1;
-       unsigned* tmp=MyMemory->myBuffer+myFtl(addr);
+       unsigned char* tmp=MyMemory->myBuffer+myFtl(addr);
     *tmp=*Register;
     printf("finish write\n");
     return 0;
@@ -207,7 +212,406 @@ void printFreePage()
     printf("%d\n",n[7]);
   }
 }
-int main()
+
+
+void printMygister()
+{
+    int i,j=0;
+   for(i=0;i<=31;i++)
+   {
+    unsigned m=myRegister[i];
+    int n[32];
+    for(j=31;j>=0;j--)
+    {
+      n[j]=m%2;
+      m=m/2;
+    }
+    for(j=0;j<32;j++)
+    {
+        printf("%d",n[j]);
+    }
+    printf("%d\n",n[7]);
+   }
+   return;
+}
+void printFloatReg()
+{
+    int i=0;
+    float* p_s=NULL;
+    double* p_d=NULL;
+    for(i=0;i<=31;i++)
+    {
+        p_s=myFloatReg+i;
+        p_d=myFloatReg+i;
+        printf("%f\t%lf\n",*p_s,*p_d);
+    }
+    return;
+}
+
+
+int exe(FILE* program)  //program指向存有待执行程序机器码的文件
+{
+    printMygister();
+    printFloatReg();
+     char* tmp_instru=(char*)malloc(33*sizeof(char)); //读机器码
+     programTail=programHead;
+     while(fscanf(program,"%s",tmp_instru)!=EOF)
+     {
+         instru=0;
+         int i=0;
+         unsigned j=1;
+         for(i=31;i>=0;i--)
+         {
+            if(tmp_instru[i]=='1')
+            {
+                instru+=j;
+                j*=2;
+            }
+            else
+            {
+                j*=2;
+            }
+         }//将机器码转为unsi
+         unsigned char* tmp_R=&instru;
+         for(i=0;i<4;i++)
+         {
+             writeMymemory(programTail+i,tmp_R+i);//装载指令
+         }
+         programTail+=4;//最后一条指令的下一条指令的地址，用来判断程序是否执行完
+     }
+     pcShort=programHead;
+     pc=pcShort;
+     while(pcShort!=programTail)
+    {
+        instru=0;   //指令寄存器清零
+    unsigned char* tmp_R=&instru;
+    unsigned short addr=addrToMyAddr(pc);
+    int i;
+    for(i=0;i<4;i++)
+    {
+        readMymemory(addr+i,tmp_R+i);//取指令
+    }
+    unsigned tmp=instru>>26;//得到指令op
+
+    printf("the op is :  %u\n",tmp);
+
+    unsigned numRs=0,numRt=0,numRd=0,numFs=0,numFt=0,numFd=0,tmp_fuc=0;
+    switch(tmp)
+    {
+    case 0x00000023:
+        numRs=instru<<6>>27;
+        numRt=instru<<11>>27;
+        RS1=myRegister+numRt;
+        RS2=myRegister+numRs;
+        lig=instru<<16>>16;
+        pc=lw(pc);
+        break;
+    case 0x0000002B:
+        numRs=instru<<6>>27;
+        numRt=instru<<11>>27;
+        RS1=myRegister+numRt;
+        RS2=myRegister+numRs;
+        lig=instru<<16>>16;
+        pc=sw(pc);
+        break;
+    case 0x00000008:
+        numRs=instru<<6>>27;
+        numRt=instru<<11>>27;
+        RS1=myRegister+numRt;
+        RS2=myRegister+numRs;
+        lig=instru<<16>>16;
+        pc=addi(pc);
+        break;
+    case 0x00000009:
+        numRs=instru<<6>>27;
+        numRt=instru<<11>>27;
+        RS1=myRegister+numRt;
+        RS2=myRegister+numRs;
+        lig=instru<<16>>16;
+        pc=addiu(pc);
+        break;
+    case 0x0000000A:
+        numRs=instru<<6>>27;
+        numRt=instru<<11>>27;
+        RS1=myRegister+numRt;
+        RS2=myRegister+numRs;
+        lig=instru<<16>>16;
+        pc=slti(pc);
+        break;
+    case 0x0000000B:
+        numRs=instru<<6>>27;
+        numRt=instru<<11>>27;
+        RS1=myRegister+numRt;
+        RS2=myRegister+numRs;
+        lig=instru<<16>>16;
+        pc=sltiu(pc);
+        break;
+    case 0x0000000C:
+        numRs=instru<<6>>27;
+        numRt=instru<<11>>27;
+        RS1=myRegister+numRt;
+        RS2=myRegister+numRs;
+        lig=instru<<16>>16;
+        pc=andi(pc);
+        break;
+    case 0x0000000D:
+        numRs=instru<<6>>27;
+        numRt=instru<<11>>27;
+        RS1=myRegister+numRt;
+        RS2=myRegister+numRs;
+        lig=instru<<16>>16;
+        pc=ori(pc);
+        break;
+    case 0x0000000E:
+        numRs=instru<<6>>27;
+        numRt=instru<<11>>27;
+        RS1=myRegister+numRt;
+        RS2=myRegister+numRs;
+        lig=instru<<16>>16;
+        pc=xori(pc);
+        break;
+    case 0x00000024:
+        numRs=instru<<6>>27;
+        numRt=instru<<11>>27;
+        RS1=myRegister+numRt;
+        RS2=myRegister+numRs;
+        lig=instru<<16>>16;
+        pc=lbu(pc);
+        break;
+    case 0x00000020:
+        numRs=instru<<6>>27;
+        numRt=instru<<11>>27;
+        RS1=myRegister+numRt;
+        RS2=myRegister+numRs;
+        lig=instru<<16>>16;
+        pc=lb(pc);
+        break;
+    case 0x00000028:
+        numRs=instru<<6>>27;
+        numRt=instru<<11>>27;
+        RS1=myRegister+numRt;
+        RS2=myRegister+numRs;
+        lig=instru<<16>>16;
+        pc=sb(pc);
+        break;
+    case 0x0000000F:
+        numRs=instru<<6>>27;
+        numRt=instru<<11>>27;
+        RS1=myRegister+numRt;
+        RS2=myRegister+numRs;
+        lig=instru<<16>>16;
+        pc=lui(pc);
+        break;
+    case 0x00000004:
+        numRs=instru<<6>>27;
+        numRt=instru<<11>>27;
+        RS1=myRegister+numRt;
+        RS2=myRegister+numRs;
+        lig=instru<<16>>16;
+        pc=beq(pc);
+        break;
+    case 0x00000005:
+        numRs=instru<<6>>27;
+        numRt=instru<<11>>27;
+        RS1=myRegister+numRt;
+        RS2=myRegister+numRs;
+        printf("%u,%u,%u,%u\n",numRt,numRs,*RS1,*RS2);
+        lig=instru<<16>>16;
+        printf("%u\n",lig);
+        pc=bne(pc);
+        break;
+    case 0x00000006:
+        numRs=instru<<6>>27;
+        numRt=instru<<11>>27;
+        RS1=myRegister+numRt;
+        RS2=myRegister+numRs;
+        lig=instru<<16>>16;
+        pc=blez(pc);
+        break;
+    case 0x00000007:
+        numRs=instru<<6>>27;
+        numRt=instru<<11>>27;
+        RS1=myRegister+numRt;
+        RS2=myRegister+numRs;
+        lig=instru<<16>>16;
+        pc=bgtz(pc);
+        break;
+    case 0x00000001:
+        numRs=instru<<6>>27;
+        numRt=instru<<11>>27;
+        RS1=myRegister+numRt;
+        RS2=myRegister+numRs;
+        lig=instru<<16>>16;
+        pc=bltz(pc);
+        break;
+    case 0x00000002:
+        pc=j(pc);
+        break;
+    case 0x00000003:
+        pc=jal(pc);
+        break;
+    case 0x00000000:
+        numRs=instru<<6>>27;
+        numRt=instru<<11>>27;
+        numRd=instru<<16>>27;
+        RS1=myRegister+numRt;
+        RS2=myRegister+numRs;
+        RD=myRegister+numRd;
+        tmp_fuc=instru%64;
+        switch(tmp_fuc)
+        {
+        case 32:
+            pc=add(pc);
+            break;
+        case 33:
+            pc=addu(pc);
+            break;
+        case 34:
+            pc=sub(pc);
+            break;
+        case 35:
+            pc=subu(pc);
+            break;
+        case 24:
+            pc=mul(pc);
+            break;
+        case 25:
+            pc=mulu(pc);
+            break;
+        case 26:
+            pc=myDiv(pc);
+            break;
+        case 27:
+            pc=divu(pc);
+            break;
+        case 42:
+            pc=slt(pc);
+            break;
+        case 43:
+            pc=sltu(pc);
+            break;
+        case 36:
+            pc=myAnd(pc);
+            break;
+        case 37:
+            pc=myOr(pc);
+            break;
+        case 39:
+            pc=nor(pc);
+            break;
+        case 40:
+            pc=myXor(pc);
+            break;
+        case 8:
+            pc=jr(pc);
+            break;
+        case 9:
+            pc=jalr(pc);
+            break;
+        case 0:
+            pc=nop(pc);
+            break;
+        case 16:
+            pc=mfhi(pc);
+            break;
+        case 18:
+            pc=mflo(pc);
+            break;
+        default:
+            break;
+        }
+        break;
+    case 0x00000010:
+        numRt=instru<<11>>27;
+        numRd=instru<<16>>27;
+        RS1=myRegister+numRt;
+        if(numRd==14)
+        {
+            pc=mfepc(pc);
+        }
+        else if(numRd==13)
+        {
+            pc=mfco(pc);
+        }
+        else return -1;
+        break;
+    case 0x00000031:
+        numRs=instru<<6>>27;
+        numFt=instru<<11>>27;
+        RS2=myRegister+numRs;
+        FS1=myFloatReg+numFt;
+        pc=lwc1(pc);
+
+
+            printf("/********\nL.D %u %u\n****************/\n",numFt,numRs);
+
+        break;
+    case 0x00000039:
+        numRs=instru<<6>>27;
+        numFt=instru<<11>>27;
+        RS2=myRegister+numRs;
+        FS1=myFloatReg+numFt;
+        printf("/********\nS.D %u %u\n****************/\n",numFt,numRs);
+        pc=swc1(pc);
+        break;
+    case 0x00000011:
+        numFt=instru<<11>>27;
+        numFs=instru<<16>>27;
+        numFd=instru<<21>>27;
+        FS1=myFloatReg+numFt;
+        FS2=myFloatReg+numFs;
+        FD=myFloatReg+numFd;
+        numRs=instru<<6>>27;
+        tmp_fuc=instru%64;
+        printf("%u %u\n",tmp_fuc,numRs);
+        if(numRs==0)
+        {
+            switch(tmp_fuc)
+            {
+            case 0:
+                pc=add_s(pc);
+                break;
+            case 1:
+                pc=sub_s(pc);
+                break;
+            case 2:
+                pc=mul_s(pc);
+            case 3:
+                pc=div_s(pc);
+            default:
+                break;
+            }
+        }
+        else if(numRs==1)
+        {
+            switch(tmp_fuc)
+            {
+            case 0:
+                pc=add_d(pc);
+                printf("/****************\nADD.D %u %u %u\n*****************/\n",numFd,numFt,numFs);
+                break;
+            case 1:
+                pc=sub_d(pc);
+                break;
+            case 2:
+                pc=mul_d(pc);
+            case 3:
+                pc=div_d(pc);
+            default:
+                break;
+            }
+        }
+        default:break;
+    }
+    pcShort=pc%0x00010000;
+    printf("%u %u\n",pc,pcShort);
+    printf("%u %u\n",pcShort,programTail);
+    }
+    printMygister();
+    printFloatReg();
+    return 0;
+}
+/*test_main()
 {
     init();
     unsigned int i;
@@ -233,15 +637,31 @@ int main()
     printf("the remaining storage of memory now is %dB\n",MyMemory->FreePage->freeCount*512);
     return 0;
 
-}
-test_DADDU_Demon()
+}*/
+int main()
 {
-    myRegister[1]=0x12345678;
-    myRegister[2]=0x87654321;
-    RS1=myRegister+1;
-    RS2=myRegister+2;
-    RD=myRegister+3;
-    DADDU(0);
-    printf("%X",myRegister[3]);
+    init();
+    FILE* program;
+    program=fopen("input.txt","r+");
+    myRegister[1]=0x00008000;
+    myRegister[2]=0x00007F00;
+    double* test=myFloatReg+2;
+    *test=1.5;
+    exe(program);
+    int i;
+    for(i=0;i<=31;i++)
+    {
+        unsigned long long tmp=0;
+        double* p=&tmp;
+        unsigned short addr=32768-8*i;
+        unsigned char* tmp_char=&tmp;
+        int j;
+        for(j=0;j<8;j++)
+        {
+           readMymemory(addr+j,tmp_char+j);
+
+        }
+        printf("%lf\n",*p);
+    }
     return 0;
 }

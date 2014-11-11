@@ -1,10 +1,11 @@
 unsigned lwc1(unsigned pc)
 {
-    char* R=FS1;
+    unsigned char* R=FS1;
     short tmp=lig;
     int a=tmp;
     unsigned short addr=addrToMyAddr(*RS2+(unsigned)a);
-    for(int i=0;i<4;i++)
+    int i;
+    for(i=0;i<4;i++)
     {
         readMymemory(addr+i,R+i);
     }
@@ -13,18 +14,19 @@ unsigned lwc1(unsigned pc)
 
 unsigned swc1(unsigned pc)
 {
-    char* R=FS1;
+    unsigned char* R=FS1;
     short tmp=lig;
     int a=tmp;
     unsigned short addr=addrToMyAddr(*RS2+(unsigned)a);
-    for(int i=0;i<4;i++)
+    int i;
+    for(i=0;i<4;i++)
     {
         writeMymemory(addr+i,R+i);
     }
     return pc+4;
 }
 
-unsigned add.s(unsigned pc)
+unsigned add_s(unsigned pc)
 {
     float *fs1=FS1;
     float *fs2=FS2;
@@ -37,20 +39,20 @@ unsigned add.s(unsigned pc)
     return pc+4;
 }
 
-unsigned add.d(unsigned pc) //双精度浮点数加法
+unsigned add_d(unsigned pc) //双精度浮点数加法
 {
     double* fs1=FS1;
     double* fs2=FS2;
     double* fd=FD;
     *fd=*fs1+*fs2;
-    if(overflow)
-    {
-        exit(EXIT_FAILURE);
-    }
+   // if(overflow)
+    //{
+    //    exit(EXIT_FAILURE);
+   // }
     return pc+4;
 }
 
-unsigned sub.s(unsigned pc)
+unsigned sub_s(unsigned pc)
 {
     float *fs1=FS1;
     float *fs2=FS2;
@@ -63,20 +65,20 @@ unsigned sub.s(unsigned pc)
     return pc+4;
 }
 
-unsigned sub.d(unsigned pc)
+unsigned sub_d(unsigned pc)
 {
     double* fs1=FS1;
     double* fs2=FS2;
     double* fd=FD;
     *fd=*fs2-*fs1;
-    if(overflow)
-    {
-        exit(EXIT_FAILURE);
-    }
+   // if(overflow)
+    //{
+   //     exit(EXIT_FAILURE);
+   // }
     return pc+4;
 }
 
-unsigned mul.s(unsigned pc)
+unsigned mul_s(unsigned pc)
 {
     float *fs1=FS1;
     float *fs2=FS2;
@@ -89,20 +91,20 @@ unsigned mul.s(unsigned pc)
     return pc+4;
 }
 
-unsigned mul.d(unsigned pc)
+unsigned mul_d(unsigned pc)
 {
     double* fs1=FS1;
     double* fs2=FS2;
     double* fd=FD;
     *fd=*fs2*(*fs1);
-    if(overflow)
-    {
-        exit(EXIT_FAILURE);
-    }
+    //if(overflow)
+    //{
+   //     exit(EXIT_FAILURE);
+   // }
     return pc+4;
 }
 
-unsigned div.d(unsigned pc)
+unsigned div_s(unsigned pc)
 {
     float *fs1=FS1;
     float *fs2=FS2;
@@ -115,16 +117,16 @@ unsigned div.d(unsigned pc)
     return pc+4;
 }
 
-unsigned div.d(unsigned pc)
+unsigned div_d(unsigned pc)
 {
     double* fs1=FS1;
     double* fs2=FS2;
     double* fd=FD;
     *fd=*fs2/(*fs1);
-    if(overflow)
-    {
-        exit(EXIT_FAILURE);
-    }
+   // if(overflow)
+   // {
+   //     exit(EXIT_FAILURE);
+    //}
     return pc+4;
 }
 
