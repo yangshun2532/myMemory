@@ -11,7 +11,35 @@ unsigned lwc1(unsigned pc)
     }
     return pc+4;
 }
+unsigned L_D(unsigned pc)  //ÔØÈëË«×Ö
+{
+    unsigned char* R=FS1;
+    short tmp=lig;
+    int a=tmp;
+    unsigned short addr=addrToMyAddr(*RS2+(unsigned)a);
+    int i;
+    for(i=0;i<8;i++)
+    {
+        readMymemory(addr+i,R+i);
+    }
+    return pc+4;
+}
 
+unsigned S_D(unsigned pc)  //´æÈëË«×Ö
+{
+    unsigned char* R=FS1;
+    short tmp=lig;
+    int a=tmp;
+    //printf("%u %d\n",*RS2,a);
+    unsigned short addr=addrToMyAddr(*RS2+(unsigned)a);
+    //printf("%u\n",addr);
+    int i;
+    for(i=0;i<8;i++)
+    {
+        writeMymemory(addr+i,R+i);
+    }
+    return pc+4;
+}
 unsigned swc1(unsigned pc)
 {
     unsigned char* R=FS1;

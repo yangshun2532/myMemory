@@ -81,7 +81,7 @@ int init()
 **************************************************************/
 unsigned short myMalloc(unsigned short offest)
 {
-  printf("begin malloc\n");
+  //printf("begin malloc\n");
   unsigned short p_addr=((MyMemory->FreePage->head)<<9)+offest;
   //printf("offset is %u\n",p_addr);
   unsigned short a=MyMemory->FreePage->head;
@@ -90,8 +90,8 @@ unsigned short myMalloc(unsigned short offest)
   //printf("%d",MyMemory->FreePage->firstFree[a]);
   MyMemory->FreePage->head=(unsigned short)(MyMemory->FreePage->firstFree[a]%128);//修改头指针
   MyMemory->FreePage->freeCount--;
-  printf("finish malloc\n");
-  printf("the malloc p_addr is : %u\n",p_addr);
+  //printf("finish malloc\n");
+  //printf("the malloc p_addr is : %u\n",p_addr);
   return p_addr;
 }
 /**************************************************************
@@ -100,7 +100,7 @@ unsigned short myMalloc(unsigned short offest)
 **************************************************************/
 unsigned short myFtl(unsigned short v_addr)
 {
-  printf("begin ftl\n");
+  //printf("begin ftl\n");
   unsigned short v_page=v_addr>>9;
   unsigned short p_addr=0;
   if(MyMemory->pageHead[v_page]/128==1)//最高位为1，无效，分配新页
@@ -112,8 +112,8 @@ unsigned short myFtl(unsigned short v_addr)
   {
     p_addr=((unsigned short)MyMemory->pageHead[v_page]<<9)+v_addr%512;
   }
-  printf("finish ftl\n");
-  printf("the p_addr is : %u\n",p_addr);
+  //printf("finish ftl\n");
+  //printf("the p_addr is : %u\n",p_addr);
   return p_addr;
 }
 /**************************************************************
@@ -122,7 +122,7 @@ unsigned short myFtl(unsigned short v_addr)
 **************************************************************/
 int myFree(unsigned short v_addr)
 {
-  printf("begin freeing\n");
+  //printf("begin freeing\n");
   if(MyMemory->pageHead[v_addr/512]/128==1)
   {
       return 0;//若该逻辑地址本来就是空闲，返回
@@ -135,7 +135,7 @@ int myFree(unsigned short v_addr)
     MyMemory->FreePage->firstFree[a]-=128;
   MyMemory->FreePage->freeCount++;
   MyMemory->FreePage->end=p_addr/512; //修改尾指针
-  printf("finish freeing\n");
+  //printf("finish freeing\n");
   return 0;
 }
 /**************************************************************
@@ -145,12 +145,12 @@ int myFree(unsigned short v_addr)
 
 int readMymemory(unsigned short addr,unsigned char* Register)
 {
-  printf("begin read\n");
+  //printf("begin read\n");
   //if((addr%4!=0)||(addr<512))
   //return -1;
   unsigned char* tmp=MyMemory->myBuffer+myFtl(addr);//读一个字节
   *Register=*tmp;
-  printf("finish read\n");
+  //printf("finish read\n");
   return 0;
 }
 /**************************************************************
@@ -159,12 +159,12 @@ int readMymemory(unsigned short addr,unsigned char* Register)
 **************************************************************/
 int writeMymemory(unsigned short addr,unsigned char* Register)
 {
-    printf("begin write\n");
+    //printf("begin write\n");
     //if(addr%4!=0||addr<512)
        // return -1;
        unsigned char* tmp=MyMemory->myBuffer+myFtl(addr);
     *tmp=*Register;
-    printf("finish write\n");
+    //printf("finish write\n");
     return 0;
 }
 
@@ -219,6 +219,7 @@ void printMygister()
     int i,j=0;
    for(i=0;i<=31;i++)
    {
+    printf("R%d:  ",i);
     unsigned m=myRegister[i];
     int n[32];
     for(j=31;j>=0;j--)
@@ -241,9 +242,11 @@ void printFloatReg()
     double* p_d=NULL;
     for(i=0;i<=31;i++)
     {
+        printf("F%d(单精度):  ",i);
         p_s=myFloatReg+i;
         p_d=myFloatReg+i;
-        printf("%f\t%lf\n",*p_s,*p_d);
+        printf("F%d:  ",i);
+        printf("%f\tF%d（双精度）: %lf\n",*p_s,i,*p_d);
     }
     return;
 }
@@ -251,8 +254,7 @@ void printFloatReg()
 
 int exe(FILE* program)  //program指向存有待执行程序机器码的文件
 {
-    printMygister();
-    printFloatReg();
+
      char* tmp_instru=(char*)malloc(33*sizeof(char)); //读机器码
      programTail=programHead;
      while(fscanf(program,"%s",tmp_instru)!=EOF)
@@ -293,7 +295,7 @@ int exe(FILE* program)  //program指向存有待执行程序机器码的文件
     }
     unsigned tmp=instru>>26;//得到指令op
 
-    printf("the op is :  %u\n",tmp);
+    //printf("the op is :  %u\n",tmp);
 
     unsigned numRs=0,numRt=0,numRd=0,numFs=0,numFt=0,numFd=0,tmp_fuc=0;
     switch(tmp)
@@ -415,9 +417,9 @@ int exe(FILE* program)  //program指向存有待执行程序机器码的文件
         numRt=instru<<11>>27;
         RS1=myRegister+numRt;
         RS2=myRegister+numRs;
-        printf("%u,%u,%u,%u\n",numRt,numRs,*RS1,*RS2);
+        //printf("%u,%u,%u,%u\n",numRt,numRs,*RS1,*RS2);
         lig=instru<<16>>16;
-        printf("%u\n",lig);
+       // printf("%u\n",lig);
         pc=bne(pc);
         break;
     case 0x00000006:
@@ -540,18 +542,42 @@ int exe(FILE* program)  //program指向存有待执行程序机器码的文件
         numFt=instru<<11>>27;
         RS2=myRegister+numRs;
         FS1=myFloatReg+numFt;
+        lig=instru<<16>>16;
         pc=lwc1(pc);
 
 
-            printf("/********\nL.D %u %u\n****************/\n",numFt,numRs);
+            //printf("/********\nL.S %u %u\n****************/\n",numFt,numRs);
 
         break;
+    case 0x0000001F:
+        numRs=instru<<6>>27;
+        numFt=instru<<11>>27;
+        RS2=myRegister+numRs;
+        FS1=myFloatReg+numFt;
+        lig=instru<<16>>16;
+        pc=S_D(pc);
+
+
+            //printf("/********\nL.D %u %u\n****************/\n",numFt,numRs);
+
+        break;
+    case 0x0000001E:
+        numRs=instru<<6>>27;
+        numFt=instru<<11>>27;
+        RS2=myRegister+numRs;
+        FS1=myFloatReg+numFt;
+        lig=instru<<16>>16;
+        //printf("/********\nS.D %u %u\n****************/\n",numFt,numRs);
+        pc=S_D(pc);
+        break;
+
     case 0x00000039:
         numRs=instru<<6>>27;
         numFt=instru<<11>>27;
         RS2=myRegister+numRs;
         FS1=myFloatReg+numFt;
-        printf("/********\nS.D %u %u\n****************/\n",numFt,numRs);
+        lig=instru<<16>>16;
+        //printf("/********\nS.S %u %u\n****************/\n",numFt,numRs);
         pc=swc1(pc);
         break;
     case 0x00000011:
@@ -563,7 +589,7 @@ int exe(FILE* program)  //program指向存有待执行程序机器码的文件
         FD=myFloatReg+numFd;
         numRs=instru<<6>>27;
         tmp_fuc=instru%64;
-        printf("%u %u\n",tmp_fuc,numRs);
+        //printf("%u %u\n",tmp_fuc,numRs);
         if(numRs==0)
         {
             switch(tmp_fuc)
@@ -588,7 +614,7 @@ int exe(FILE* program)  //program指向存有待执行程序机器码的文件
             {
             case 0:
                 pc=add_d(pc);
-                printf("/****************\nADD.D %u %u %u\n*****************/\n",numFd,numFt,numFs);
+                //printf("/****************\nADD.D %u %u %u\n*****************/\n",numFd,numFt,numFs);
                 break;
             case 1:
                 pc=sub_d(pc);
@@ -604,11 +630,9 @@ int exe(FILE* program)  //program指向存有待执行程序机器码的文件
         default:break;
     }
     pcShort=pc%0x00010000;
-    printf("%u %u\n",pc,pcShort);
-    printf("%u %u\n",pcShort,programTail);
+    //printf("%u %u\n",pc,pcShort);
+    //printf("%u %u\n",pcShort,programTail);
     }
-    printMygister();
-    printFloatReg();
     return 0;
 }
 /*test_main()
@@ -638,30 +662,57 @@ int exe(FILE* program)  //program指向存有待执行程序机器码的文件
     return 0;
 
 }*/
+/*
+主函数基于课本151页的测试循环小程序进行编写
+*/
 int main()
 {
-    init();
+    init();//初始化
+    int i;
     FILE* program;
-    program=fopen("input.txt","r+");
+    program=fopen("input.txt","r+");//设置输入文件
+  //设置R1和R2
     myRegister[1]=0x00008000;
     myRegister[2]=0x00007F00;
     double* test=myFloatReg+2;
-    *test=1.5;
-    exe(program);
-    int i;
+    *test=1.5;//设置F2
+    printf("/****************** 执行前*******************/\n从0(R1)到8(R2)的值向量(使用双精度浮点数型读)：\n");
     for(i=0;i<=31;i++)
     {
         unsigned long long tmp=0;
         double* p=&tmp;
-        unsigned short addr=32768-8*i;
+        unsigned short addr=addrToMyAddr(32768-8*i);
         unsigned char* tmp_char=&tmp;
         int j;
         for(j=0;j<8;j++)
         {
            readMymemory(addr+j,tmp_char+j);
-
         }
         printf("%lf\n",*p);
+
     }
+    printf("寄存器状态：\n");
+    printMygister();  //显示通用寄存器
+    printFloatReg();  //显示浮点数寄存器
+    exe(program);//开始执行
+    //显示存储器中的值向量
+    printf("/****************** 执行后*******************/\n从0(R1)到8(R2)的值向量(使用双精度浮点数型读):\n");
+    for(i=0;i<=31;i++)
+    {
+        unsigned long long tmp=0;
+        double* p=&tmp;
+        unsigned short addr=addrToMyAddr(32768-8*i);
+        unsigned char* tmp_char=&tmp;
+        int j;
+        for(j=0;j<8;j++)
+        {
+           readMymemory(addr+j,tmp_char+j);
+        }
+        printf("%lf\n",*p);
+
+    }
+    printf("寄存器状态：\n");
+    printMygister();  //显示通用寄存器
+    printFloatReg();  //显示浮点数寄存器
     return 0;
 }
